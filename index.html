@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deforestasi Kalimantan Barat</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 500px;
+    }
+    .content {
+      padding: 20px;
+    }
+    .info-box {
+      background: #f9f9f9;
+      padding: 15px;
+      margin-top: 10px;
+      border-left: 5px solid #2e7d32;
+    }
+    .year-buttons {
+      margin: 10px 0;
+    }
+    .year-buttons button {
+      margin-right: 10px;
+      padding: 10px;
+      font-size: 14px;
+      background-color: #e0e0e0;
+      border: none;
+      cursor: pointer;
+    }
+    .year-buttons button.active {
+      background-color: #388e3c;
+      color: white;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+
+<h1 style="text-align:center;">Visualisasi Deforestasi di Kalimantan Barat</h1>
+
+<div class="content">
+  <div class="year-buttons">
+    <strong>Pilih Tahun Deforestasi:</strong>
+    <button onclick="updateDeforestation(2010)">2010</button>
+    <button onclick="updateDeforestation(2015)">2015</button>
+    <button onclick="updateDeforestation(2020)">2020</button>
+    <button onclick="updateDeforestation(2023)">2023</button>
+  </div>
+</div>
+
+<div id="map"></div>
+<div class="content">
+  <div class="info-box">
+    <h2>Apa itu Deforestasi?</h2>
+    <p>Deforestasi adalah proses penggundulan hutan, biasanya untuk keperluan pertanian, penebangan liar, dan pembangunan. Di Kalimantan Barat, deforestasi telah menyebabkan hilangnya habitat, penurunan kualitas udara, dan perubahan iklim mikro.</p>
+  </div>
+
+  <div class="info-box">
+    <h2>Faktor Penyebab Deforestasi</h2>
+    <ul>
+      <li><strong>Konversi Lahan:</strong> Hutan diubah menjadi lahan pertanian, perkebunan kelapa sawit, dan pemukiman.</li>
+      <li><strong>Penebangan Liar:</strong> Aktivitas penebangan tanpa izin menyebabkan hilangnya hutan secara signifikan.</li>
+      <li><strong>Kebakaran Hutan:</strong> Baik disengaja maupun akibat kekeringan, kebakaran mempercepat kerusakan hutan.</li>
+      <li><strong>Pembangunan Infrastruktur:</strong> Pembangunan jalan dan fasilitas lainnya sering mengorbankan area hutan.</li>
+      <li><strong>Lemahnya Penegakan Hukum:</strong> Kurangnya pengawasan memungkinkan praktik ilegal terus berlangsung.</li>
+      <li><strong>Perubahan Iklim:</strong> Peningkatan suhu dan perubahan pola curah hujan menyebabkan stres pada vegetasi hutan.</li>
+    </ul>
+  </div>
+
+  <div class="info-box">
+    <h2>Dampak Deforestasi</h2>
+    <p>Deforestasi di Kalimantan Barat tidak hanya mengancam keanekaragaman hayati dan ekosistem lokal, tetapi juga berkontribusi pada perubahan iklim global. Hilangnya hutan mengurangi kemampuan alam dalam menyerap karbon dioksida, mempercepat pemanasan global, dan meningkatkan frekuensi bencana alam seperti banjir dan kekeringan.</p>
+  </div>
+
+  <div class="info-box">
+    <h2>Dampak Perubahan Suhu</h2>
+    <p>Setelah deforestasi, suhu di wilayah terdampak dapat meningkat 1-3°C karena berkurangnya tutupan vegetasi yang biasanya menyerap panas. Hal ini memperburuk efek rumah kaca dan mengganggu siklus air lokal.</p>
+  </div>
+
+  <div class="info-box">
+    <h2>Perubahan Suhu Sebelum dan Setelah Deforestasi</h2>
+    <canvas id="temperatureChart"></canvas>
+   </div> 
+  
+  <div class="info-box">
+    <h2>Upaya Mengatasi Deforestasi</h2>
+    <ul>
+      <li>Memperkuat penegakan hukum agar aktivitas ilegal seperti penebangan liar bisa dihentikan.</li>
+      <li>Mengelola hutan dengan cara yang lebih bijak dan berkelanjutan.</li>
+      <li>Meningkatkan kesadaran masyarakat tentang pentingnya menjaga hutan.</li>
+      <li>Menyediakan pilihan ekonomi lain yang ramah lingkungan bagi warga sekitar hutan.</li>
+    </ul>
+  </div>
+</div>
+</div>
+
+<script>
+  const map = L.map('map').setView([-0.2788, 111.4753], 7);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  let currentLayer;
+
+  // Simulasi area deforestasi berdasarkan tahun
+  const deforestationData = {
+  2010: [[[-0.4, 110.6], [-0.3, 110.9], [-0.1, 110.95], [0.0, 110.8], [-0.1, 110.6]]],
+  2015: [[[-0.6, 110.4], [-0.4, 111.0], [-0.2, 111.3], [0.1, 111.0], [0.0, 110.7], [-0.3, 110.5]]],
+  2020: [[[-0.8, 110.5], [-0.5, 111.1], [-0.3, 111.5], [0.0, 111.3], [0.2, 110.8], [-0.2, 110.4]]],
+  2023: [[[-1.0, 110.2], [-0.7, 111.0], [-0.3, 111.7], [0.2, 111.6], [0.5, 111.0], [0.3, 110.5], [-0.4, 110.1]]],
+}
+;
+
+  function updateDeforestation(year) {
+    if (currentLayer) {
+      map.removeLayer(currentLayer);
+    }
+
+    const polygons = deforestationData[year].map(coords => 
+      L.polygon(coords, {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.5
+      }).bindPopup(`<b>Deforestasi Tahun ${year}</b><br>Area terdampak di Kalimantan Barat.`)
+    );
+
+    currentLayer = L.layerGroup(polygons).addTo(map);
+
+    // Update tombol aktif
+    document.querySelectorAll('.year-buttons button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    const activeBtn = Array.from(document.querySelectorAll('.year-buttons button')).find(btn => btn.innerText == year);
+    if (activeBtn) activeBtn.classList.add('active');
+  }
+
+  // Tampilkan data awal
+  updateDeforestation(2010);
+
+  // Chart suhu
+  const ctx = document.getElementById('temperatureChart').getContext('2d');
+  const temperatureChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['2010', '2012', '2014', '2016', '2018', '2020', '2022'],
+      datasets: [
+        {
+          label: 'Suhu Sebelum Deforestasi (°C)',
+          data: [26.5, 26.6, 26.7, 26.8, 27.0, 27.1, 27.2],
+          borderColor: 'green',
+          backgroundColor: 'rgba(0,128,0,0.1)',
+          tension: 0.3
+        },
+        {
+          label: 'Suhu Setelah Deforestasi (°C)',
+          data: [26.5, 26.8, 27.2, 27.5, 27.8, 28.0, 28.3],
+          borderColor: 'red',
+          backgroundColor: 'rgba(255,0,0,0.1)',
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Perubahan Suhu Rata-rata Tahunan'
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
